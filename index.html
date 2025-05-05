@@ -779,20 +779,20 @@
       document.getElementById("pageNumber").textContent = currentPage;
     }
 
-    function nextPage() {
-      if ((currentPage * moviesPerPage) < displayedMovies.length) {
-        currentPage++;
-        displayMovies();
-      }
-    }
+    // Replace your current pagination functions with:
+window.nextPage = function() {
+  if ((currentPage * moviesPerPage) < displayedMovies.length) {
+    currentPage++;
+    displayMovies();
+  }
+};
 
-    function prevPage() {
-      if (currentPage > 1) {
-        currentPage--;
-        displayMovies();
-      }
-    }
-
+window.prevPage = function() {
+  if (currentPage > 1) {
+    currentPage--;
+    displayMovies();
+  }
+};
     function loadGenres() {
       let genresSet = new Set(["All", ...allMovies.map(movie => movie.genre)]);
       const genresContainer = document.getElementById("genresContainer");
