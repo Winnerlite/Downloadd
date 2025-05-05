@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Premium Movie Downloader</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+  <style>
+    body {
+  background: radial-gradient(circle, #0a0a0a 40%, #111 100%);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* This centers all direct children horizontally */
+}
+
+.container {
+  width: 100%;
+  max-width: 1400px; /* Match your header max-width */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Search container specific fixes */
+.search-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px; /* Top:0, Left/Right:auto (centers), Bottom:20px */
+  display: flex;
+  justify-content: center;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 12px; /* Slightly larger for better UX */
+  font-size: 16px;
+  border-radius: 9px;
+  border: 1px solid #6A0DAD;
+  background: #222;
+  color: #fff;
+  max-width: 600px; /* Ensures it doesn't exceed container */
+}
+    /* Fixed Header Section */
+    .header-section {
+      position: sticky;
+      top: 0;
+      background-color: #0a0a0a;
+      z-index: 999;
+      width: 100%;
+      max-width: 1400px;
+      padding: 10px 0;
+    }
+
+    .genres-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .genre {
+      cursor: pointer;
+      font-size: 16px;
+      color: #6A0DAD;
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .genre:hover,
+    .genre.active {
+      background: #6A0DAD;
+      color: #fff;
+    }
+
+    .search-container {
+      margin-bottom: 20px;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    .search-container input {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 9px;
+      border: 1px solid #6A0DAD;
+      background: #222;
+      color: #fff;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top: 6px solid #6A0DAD;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .movie-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 1400px;
+      padding: 20px;
+    }
+
+    .movie-card {
+      width: 100%;
+      max-width: 400px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      overflow: hidden;
+      border-radius: 12px;
+      position: relative;
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .movie-card:hover img {
+      transform: scale(1.05);
+      filter: brightness(80%);
+    }
+
+    .description-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: rgba(106, 13, 173, 0.7);
+      color: white;
+      border: none;
+      border-radius: 0 0 12px 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: -5px;
+    }
+
+    .description-btn:hover {
+      background: rgba(106, 13, 173, 0.9);
+    }
+
+    .pagination {
+  position: sticky;
+  bottom: 0;
+  background-color: transparent; /* Changed from #0a0a0a to transparent */
+  padding: 15px 0;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  z-index: 998;
+}
+
+.pagination button {
+  padding: 10px 15px;
+  border: none;
+  background: transparent; /* Changed from #6A0DAD to transparent */
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.pagination button:hover {
+  background: rgba(106, 13, 173, 0.3); /* Lighter purple on hover */
+  color: #fff;
+}
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.9);
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background-color: #111;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 90%;
+      box-shadow: 0 0 20px rgba(106, 13, 173, 0.5);
+      position: relative;
+    }
+
+    .close-modal {
+      position: absolute;
+      right: 25px;
+      top: 15px;
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .close-modal:hover {
+      color: #6A0DAD;
+    }
+
+    #modalTitle {
+      color: #6A0DAD;
+      margin-bottom: 20px;
+      font-size: 2rem;
+    }
+
+    #modalDescription {
+      color: #ddd;
+      line-height: 1.6;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+     /* Updated Privacy Modal Styles for Better Readability */
+    .privacy-modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.85);
+    }
+    
+    .privacy-modal-content {
+      background-color: #1a1a1a; /* Lighter dark background */
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 90%;
+      box-shadow: 0 0 25px rgba(106, 13, 173, 0.6);
+      position: relative;
+      border: 1px solid #333;
+    }
+    
+    .privacy-modal h2 {
+      color: #8a4fff; /* Brighter purple for heading */
+      margin-bottom: 20px;
+      font-size: 2rem;
+      text-align: center;
+    }
+    
+    #privacyContent {
+      color: #e0e0e0; /* Lighter text color */
+      line-height: 1.7; /* Increased line height */
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 15px;
+      text-align: left;
+      font-size: 16px;
+    }
+    
+    #privacyContent h3 {
+      color: #a67aff; /* Lighter purple for subheadings */
+      margin-top: 20px;
+      font-size: 1.3rem;
+    }
+    
+    #privacyContent p {
+      margin-bottom: 15px;
+    }
+    
+    #privacyContent ul {
+      padding-left: 20px;
+      margin-bottom: 15px;
+    }
+    
+    #privacyContent li {
+      margin-bottom: 8px;
+    }
+    
+    .close-privacy-modal {
+      position: absolute;
+      right: 25px;
+      top: 15px;
+      color: #bbb;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    
+    .close-privacy-modal:hover {
+      color: #8a4fff;
+    }
+    
+    .privacy-footer {
+      margin-top: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #333;
+      padding-top: 20px;
+    }
+    
+    .privacy-accept-btn {
+      padding: 12px 25px;
+      background: #6A0DAD;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    .privacy-accept-btn:hover {
+      background: #500A91;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    #privacyLearnMore {
+      color: #a67aff;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    #privacyLearnMore:hover {
+      color: #8a4fff;
+      text-decoration: underline;
+    }
+    
+    /* Custom scrollbar for modal */
+    #privacyContent::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #privacyContent::-webkit-scrollbar-track {
+      background: #2a2a2a;
+      border-radius: 10px;
+    }
+    
+    #privacyContent::-webkit-scrollbar-thumb {
+      background: #6A0DAD;
+      border-radius: 10px;
+    }
+    
+    #privacyContent::-webkit-scrollbar-thumb:hover {
+      background: #500A91;
+    }
+    
+        /* Welcome Modal Styles */
+    .welcome-modal {
+      display: none;
+      position: fixed;
+      z-index: 1002; /* Higher than privacy modal */
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.9);
+    }
+
+    .welcome-modal-content {
+      background-color: #1a1a1a;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 90%;
+      box-shadow: 0 0 25px rgba(106, 13, 173, 0.6);
+      position: relative;
+      border: 1px solid #333;
+    }
+
+    .welcome-modal h2 {
+      color: #8a4fff;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2rem;
+    }
+
+    .welcome-modal .feature {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      background: rgba(106, 13, 173, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .welcome-modal .feature-icon {
+      font-size: 24px;
+      margin-right: 15px;
+      color: #6A0DAD;
+      min-width: 30px;
+    }
+
+    .welcome-modal .feature-text h3 {
+      color: #a67aff;
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+
+    .welcome-modal .feature-text p {
+      color: #e0e0e0;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .welcome-close-btn {
+      padding: 12px 25px;
+      background: #6A0DAD;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      display: block;
+      margin: 30px auto 0;
+      transition: all 0.3s;
+    }
+
+    .welcome-close-btn:hover {
+      background: #500A91;
+      transform: translateY(-2px);
+    }
+
+    /* Responsive adjustments for welcome modal */
+    @media (max-width: 768px) {
+      .welcome-modal-content {
+        margin: 2vh auto;
+        padding: 20px;
+      }
+      
+      .welcome-modal h2 {
+        font-size: 1.5rem;
+      }
+      
+      .welcome-modal .feature {
+        flex-direction: column;
+        padding: 12px;
+      }
+      
+      .welcome-modal .feature-icon {
+        margin-bottom: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .welcome-modal-content {
+        margin: 10px auto;
+        padding: 15px;
+      }
+      
+      .welcome-modal h2 {
+        font-size: 1.3rem;
+      }
+      
+      .welcome-modal .feature-text h3 {
+        font-size: 1.1rem;
+      }
+    }
+    
+    /* Network Status Styles */
+.network-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  z-index: 1003; /* Higher than other modals */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.network-status.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.network-status.online {
+  background-color: #28a745; /* Green */
+}
+
+.network-status.offline {
+  background-color: #dc3545; /* Red */
+}
+
+.network-status-icon {
+  font-size: 20px;
+}
+
+  </style>
+</head>
+<body>
+     
+     <!-- Network Status Notification -->
+<div id="networkStatus" class="network-status">
+  <span class="network-status-icon" id="networkStatusIcon">📶</span>
+  <span id="networkStatusText">You are now online</span>
+</div>
+     
+      <!-- Welcome Modal -->
+  <div id="welcomeModal" class="welcome-modal">
+    <div class="welcome-modal-content">
+      <h2>Welcome to 9Movies!</h2>
+      
+      <div class="feature">
+        <div class="feature-icon">🍿</div>
+        <div class="feature-text">
+          <h3>Browse Movies</h3>
+          <p>Explore our collection of movies organized by genres. Use the search bar to find specific titles quickly.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-text">
+          <h3>View Details</h3>
+          <p>Click on show description to see detailed information including plot summary and available download options.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">⬇️</div>
+        <div class="feature-text">
+          <h3>Download Movies</h3>
+          <p>Find quick download links in the movie details section. We provide multiple quality options when available.</p>
+        </div>
+      </div>
+      
+      <div class="feature">
+        <div class="feature-icon">⚡</div></div>
+        <div class="feature-text">
+          <h3>Quick Downloads</h3>
+          <p>9Movies provide instant download options, no streaming.</p>
+        </div>
+      </div>
+      
+      <button class="welcome-close-btn" id="welcomeCloseBtn">I understand</button>
+    </div>
+  </div>
+  
+       <!-- Add Privacy Policy Modal -->
+  <div id="privacyModal" class="privacy-modal">
+    <div class="privacy-modal-content">
+      <span class="close-privacy-modal">&times;</span>
+      <h2>Privacy Policy</h2>
+      <div id="privacyContent">
+        <p><strong>Last Updated:</strong> [Date]</p>
+        
+        <h3>1. Information We Collect</h3>
+        <p>We may collect information about your device and how you interact with our service, including:</p>
+        <ul>
+          <li>Device information (browser type, IP address)</li>
+          <li>Usage data (pages visited, features used)</li>
+          <li>Cookies and similar tracking technologies</li>
+        </ul>
+        
+        <h3>2. How We Use Your Information</h3>
+        <p>We use this information to:</p>
+        <ul>
+          <li>Provide and improve our service</li>
+          <li>Personalize your experience</li>
+          <li>Analyze usage patterns</li>
+          <li>Ensure security and prevent fraud</li>
+        </ul>
+        
+        <h3>3. Data Sharing</h3>
+        <p>We do not sell your personal information. We may share data with:</p>
+        <ul>
+          <li>Service providers who assist in operating our service</li>
+          <li>Legal authorities when required by law</li>
+        </ul>
+        
+        <h3>4. Your Choices</h3>
+        <p>You can:</p>
+        <ul>
+          <li>Disable cookies in your browser settings</li>
+          <li>Clear your browser cache to remove stored data</li>
+          <li>Contact us with privacy concerns</li>
+        </ul>
+        
+        <h3>5. Changes to This Policy</h3>
+        <p>We may update this policy periodically. Continued use of our service constitutes acceptance.</p>
+      </div>
+      <div class="privacy-footer">
+        <a href="#" id="privacyLearnMore">Learn More</a>
+        <button class="privacy-accept-btn" id="privacyAccept">I Understand</button>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- Header Section (Fixed) -->
+  <div class="header-section">
+    <div class="genres-container" id="genresContainer"></div>
+    <div class="search-container">
+      <input type="text" id="searchBar" placeholder="Search movies..." oninput="filterMovies()" />
+    </div>
+  </div>
+
+  <!-- Loading Animation -->
+  <div id="loadingText" class="loading"></div>
+
+  <!-- Main Content -->
+  <main class="container">
+    <div class="movie-grid" id="movieGrid"></div>
+  </main>
+
+  <!-- Pagination (Fixed Bottom) -->
+  <div class="pagination">
+    <button onclick="prevPage()">◀ Prev</button>
+    <span id="pageNumber">1</span>
+    <button onclick="nextPage()">Next ▶</button>
+  </div>
+
+  <!-- Description Modal -->
+  <div id="descriptionModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h1 id="modalTitle"></h1>
+      <div id="modalDescription"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    const moviesPerPage = 15;
+    let allMovies = JSON.parse(localStorage.getItem("moviesJSON")) || [];
+    let displayedMovies = [];
+    let selectedGenre = "All";
+
+    function loadMoviesFromLocalStorage() {
+      if (allMovies.length > 0) {
+        console.log("✅ Loaded movies from local storage.");
+        loadGenres();
+        filterMovies();
+      } else {
+        fetchMoviesFromRSS();
+      }
+    }
+
+    async function fetchMoviesFromRSS() {
+      document.getElementById("loadingText").style.display = "block";
+      const rssURL = "https://level9movies.blogspot.com/feeds/posts/default?alt=json&max-results=100";
+      try {
+        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssURL)}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const data = await response.json();
+        const jsonData = JSON.parse(data.contents);
+        let newMovies = jsonData.feed.entry.map(entry => {
+          let title = entry.title.$t || "Unknown Title";
+          let linkObj = entry.link.find(l => l.rel === "alternate");
+          let link = linkObj ? linkObj.href : "#";
+          let postIdMatch = link.match(/post-(\d+)/) || link.match(/(\d{4}\/\d{2}\/[^/]+)/);
+          let postId = postIdMatch ? postIdMatch[1] : null;
+          let content = entry.content?.$t || "";
+          let imgTag = content.match(/<img.*?src=["'](.*?)["']/);
+          let img = imgTag ? imgTag[1] : "https://via.placeholder.com/250";
+
+          let videoLinks = [];
+          const videoRegex = /<a\s.*?href=["'](https?:\/\/.*?\.(mp4|mkv|avi|mov|wmv|flv|webm)[^"']*)["'].*?>(.*?)<\/a>/gi;
+          let match;
+          while ((match = videoRegex.exec(content)) !== null) {
+            videoLinks.push({ url: match[1], text: match[3] || 'Download' });
+          }
+
+          // Extract clean description by removing image tags and trimming
+          let description = content.replace(/<img[^>]*>/g, "").trim();
+
+          let categories = entry.category ? entry.category.map(cat => cat.term) : ["Other"];
+          let genre = categories.length > 0 ? categories[0] : "Other";
+
+          return {
+            title,
+            image: img,
+            link,
+            genre,
+            postId,
+            videoLinks: videoLinks.length > 0 ? videoLinks : null,
+            description
+          };
+        });
+
+        let updatedMovies = [...newMovies, ...allMovies.filter(m => !newMovies.some(nm => nm.title === m.title))];
+        localStorage.setItem("moviesJSON", JSON.stringify(updatedMovies));
+        allMovies = updatedMovies;
+        loadGenres();
+        filterMovies();
+      } catch (error) {
+        console.error("Failed to fetch movies:", error);
+      } finally {
+        setTimeout(() => {
+          document.getElementById("loadingText").style.display = "none";
+        }, 3000);
+      }
+    }
+
+    function filterMovies() {
+      let searchQuery = document.getElementById("searchBar").value.toLowerCase();
+      displayedMovies = allMovies.filter(movie =>
+        (selectedGenre === "All" || movie.genre === selectedGenre) &&
+        (movie.title.toLowerCase().includes(searchQuery))
+      );
+      if (currentPage > Math.ceil(displayedMovies.length / moviesPerPage)) {
+        currentPage = Math.ceil(displayedMovies.length / moviesPerPage);
+      }
+      displayMovies();
+    }
+
+    function displayMovies() {
+      const movieGrid = document.getElementById("movieGrid");
+      movieGrid.innerHTML = "";
+      let paginatedMovies = displayedMovies.slice(
+        (currentPage - 1) * moviesPerPage,
+        currentPage * moviesPerPage
+      );
+      paginatedMovies.forEach(movie => {
+        let encodedData = encodeURIComponent(JSON.stringify({
+          title: movie.title,
+          image: movie.image,
+          link: movie.link,
+          genre: movie.genre,
+          postId: movie.postId,
+          videoLinks: movie.videoLinks,
+          description: movie.description
+        }));
+        movieGrid.innerHTML += `
+          <div class="movie-card">
+            <a href="movie-details.html?data=${encodedData}">
+              <img src="${movie.image}" alt="${movie.title}">
+            </a>
+            <button class="description-btn" onclick='openModal(${JSON.stringify(movie).replace(/'/g, "\\'")})'>Show Description</button>
+          </div>`;
+      });
+      document.getElementById("pageNumber").textContent = currentPage;
+    }
+
+    function nextPage() {
+      if ((currentPage * moviesPerPage) < displayedMovies.length) {
+        currentPage++;
+        displayMovies();
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        displayMovies();
+      }
+    }
+
+    function loadGenres() {
+      let genresSet = new Set(["All", ...allMovies.map(movie => movie.genre)]);
+      const genresContainer = document.getElementById("genresContainer");
+      genresContainer.innerHTML = "";
+      genresSet.forEach(genre => {
+        let genreElement = document.createElement("a");
+        genreElement.classList.add("genre");
+        genreElement.textContent = genre;
+        genreElement.onclick = () => {
+          selectedGenre = genre;
+          filterMovies();
+        };
+        genresContainer.appendChild(genreElement);
+      });
+    }
+
+    // Modal Logic
+    const modal = document.getElementById('descriptionModal');
+    const closeBtn = document.querySelector('.close-modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDescription = document.getElementById('modalDescription');
+
+    function openModal(movie) {
+      modal.style.display = 'block';
+      modalTitle.innerText = movie.title;
+      modalDescription.innerHTML = `
+        <p><strong>Genre:</strong> ${movie.genre}</p>
+        <p><strong>Post ID:</strong> ${movie.postId || 'N/A'}</p>
+        <p><strong>Description:</strong></p>
+        <div>${movie.description}</div>
+        ${movie.videoLinks ? `<p><strong>Available Downloads:</strong><ul>${movie.videoLinks.map(v => `<li><a href='${v.url}' target='_blank'>${v.text}</a></li>`).join('')}</ul></p>` : ''}
+      `;
+    }
+
+    closeBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    loadMoviesFromLocalStorage();
+    setInterval(fetchMoviesFromRSS, 5000);
+    
+    
+    // Privacy Policy Modal Functionality
+    // Enhanced Modal Functionality with Privacy Policy and Welcome Modals
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if user has accepted privacy policy and seen welcome
+  const privacyAccepted = localStorage.getItem('privacyAccepted');
+  const welcomeShown = localStorage.getItem('welcomeShown');
+  
+  // Initialize the app regardless of modals
+  loadMoviesFromLocalStorage();
+  setInterval(fetchMoviesFromRSS, 5000);
+
+  // Show privacy modal first if not accepted
+  if (!privacyAccepted) {
+    showPrivacyModal();
+  } 
+  // Show welcome modal if privacy was accepted but welcome not shown
+  else if (!welcomeShown) {
+    showWelcomeModal();
+  }
+});
+
+function showPrivacyModal() {
+  const privacyModal = document.getElementById('privacyModal');
+  const closePrivacyModal = document.querySelector('.close-privacy-modal');
+  const privacyAcceptBtn = document.getElementById('privacyAccept');
+  const privacyLearnMore = document.getElementById('privacyLearnMore');
+  
+  // Show modal
+  privacyModal.style.display = 'block';
+  
+  // When user accepts
+  privacyAcceptBtn.addEventListener('click', function() {
+    localStorage.setItem('privacyAccepted', 'true');
+    privacyModal.style.display = 'none';
+    showWelcomeModal(); // Show welcome modal after accepting privacy
+  });
+  
+  // When user clicks close
+  closePrivacyModal.addEventListener('click', function() {
+    localStorage.setItem('privacyAccepted', 'true');
+    privacyModal.style.display = 'none';
+    showWelcomeModal(); // Show welcome modal after accepting privacy
+  });
+  
+  // When user clicks outside modal
+  window.addEventListener('click', function(event) {
+    if (event.target == privacyModal) {
+      localStorage.setItem('privacyAccepted', 'true');
+      privacyModal.style.display = 'none';
+      showWelcomeModal(); // Show welcome modal after accepting privacy
+    }
+  });
+  
+  // Learn more link
+  privacyLearnMore.addEventListener('click', function(e) {
+    e.preventDefault();
+    // Here you could open a more detailed policy page
+    alert('Redirecting to full privacy policy...');
+  });
+}
+
+function showWelcomeModal() {
+  // Only show if not already shown
+  if (localStorage.getItem('welcomeShown')) return;
+  
+  const welcomeModal = document.getElementById('welcomeModal');
+  const welcomeCloseBtn = document.getElementById('welcomeCloseBtn');
+  
+  welcomeModal.style.display = 'block';
+  
+  // When user clicks get started
+  welcomeCloseBtn.addEventListener('click', function() {
+    localStorage.setItem('welcomeShown', 'true');
+    welcomeModal.style.display = 'none';
+  });
+  
+  // Close when clicking outside content
+  window.addEventListener('click', function(event) {
+    if (event.target == welcomeModal) {
+      localStorage.setItem('welcomeShown', 'true');
+      welcomeModal.style.display = 'none';
+    }
+  });
+  
+  // Also close with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      localStorage.setItem('welcomeShown', 'true');
+      welcomeModal.style.display = 'none';
+    }
+  });
+}
+    
+    // Additional responsive handling for modal height
+    function adjustModalHeight() {
+      const privacyContent = document.getElementById('privacyContent');
+      const windowHeight = window.innerHeight;
+      
+      if (windowHeight < 700) {
+        privacyContent.style.maxHeight = '50vh';
+      } else if (windowHeight < 900) {
+        privacyContent.style.maxHeight = '60vh';
+      } else {
+        privacyContent.style.maxHeight = '70vh';
+      }
+    }
+    
+    // Call on load and resize
+    window.addEventListener('load', adjustModalHeight);
+    window.addEventListener('resize', adjustModalHeight);
+    
+    
+    // Network Connection Detector
+function setupNetworkDetector() {
+  const networkStatus = document.getElementById('networkStatus');
+  const networkStatusText = document.getElementById('networkStatusText');
+  const networkStatusIcon = document.getElementById('networkStatusIcon');
+
+  function updateNetworkStatus(online) {
+    if (online) {
+      networkStatus.className = 'network-status online show';
+      networkStatusText.textContent = 'You are now online';
+      networkStatusIcon.textContent = '📶';
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        networkStatus.classList.remove('show');
+      }, 3000);
+    } else {
+      networkStatus.className = 'network-status offline show';
+      networkStatusText.textContent = 'You are offline - connection required';
+      networkStatusIcon.textContent = '⚠️';
+    }
+  }
+
+  // Initial check
+  updateNetworkStatus(navigator.onLine);
+
+  // Listen for changes
+  window.addEventListener('online', () => updateNetworkStatus(true));
+  window.addEventListener('offline', () => updateNetworkStatus(false));
+}
+
+// Call this in your DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', function() {
+  // ... your existing DOMContentLoaded code ...
+  
+  setupNetworkDetector();
+});
+  </script>
+</body>
+</html>
