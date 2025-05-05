@@ -990,6 +990,23 @@ document.addEventListener('DOMContentLoaded', function() {
   
   setupNetworkDetector();
 });
+
+// At the very end of your script, add this:
+document.addEventListener('DOMContentLoaded', function() {
+  window.nextPage = function() {
+    if ((currentPage * moviesPerPage) < displayedMovies.length) {
+      currentPage++;
+      displayMovies();
+    }
+  };
+
+  window.prevPage = function() {
+    if (currentPage > 1) {
+      currentPage--;
+      displayMovies();
+    }
+  };
+});
   </script>
 </body>
 </html>
